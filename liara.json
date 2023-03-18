@@ -1,0 +1,8 @@
+{
+    "platform": "django",
+    "app": "brandtik",
+
+    "cron": [
+        "*/10 * * * * cd $ROOT && python3 manage.py reserve_orders >> /dev/null 2>&1"
+      ]
+}

@@ -10,7 +10,7 @@ urlpatterns = [
     # path('accounts/', include('accounts.urls', namespace='accounts')),
     
     # Main Urls
-    path('main/', include('main.urls', namespace='main')),
+    path('', include('main.urls', namespace='main')),
     
     # Demo Urls
     path('demo/', include('demo.urls', namespace='demo')),

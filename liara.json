@@ -1,8 +1,15 @@
 {
-    "platform": "django",
-    "app": "brandtik",
+  "platform": "django",
+  "app": "rexan-reserver",
 
-    "cron": [
-        "*/10 * * * * cd $ROOT && python3 manage.py reserve_orders >> /dev/null 2>&1"
-      ]
+  "disks": [{
+      "name": "media",
+      "mountTo": "media"
+    },
+
+    {
+      "name": "temp",
+      "mountTo": "/tmp"
+    }
+  ]
 }

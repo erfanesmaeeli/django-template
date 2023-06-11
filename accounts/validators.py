@@ -10,6 +10,7 @@ def limit_file_size(value):
         raise ValidationError("ابعداد عکس باید 1x1 (مربعی) باشد.")
     
 
-def phone_number_validator(value):
+def phone_validation(value):
     if not bool(match(pattern=r"^09\d{9}$", string=value)):
-        raise ValidationError(message="شماره تلفن معتبر نمیباشد.")
+        return False
+    return True

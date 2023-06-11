@@ -1,18 +1,18 @@
 from django.db import models
 from django.utils.safestring import mark_safe
 from django.contrib.auth.models import AbstractUser
-from .validators import phone_number_validator, limit_file_size
 from main.models import General
 from django.db.models import Q
 from jalali_date import datetime2jalali, date2jalali
 from datetime import datetime
+from .managers import UserManager
+from .utils import generate_new_verification_code
 
 
 class User(AbstractUser):
     GENDER_CHOICES = [
-        ('male', 'آقا'),
-        ('female', 'خانم'),
-        ('other', 'سایر'),
+        (1, 'آقا'),
+        (2, 'خانم'),
     ]
     
     first_name = models.CharField(verbose_name="نام", max_length=30, null=True, blank=False)
@@ -20,12 +20,15 @@ class User(AbstractUser):
     date_joined = models.DateTimeField(verbose_name="تاریخ عضویت", null=True, blank=True, default=datetime.now)
     last_update = models.DateTimeField(verbose_name="آخرین بروزرسانی", auto_now=True, null=True)
     last_login = models.DateTimeField(verbose_name="آخرین ورود", null=True, blank=True)
-    gender = models.CharField(verbose_name="جنسیت", max_length=10, choices=GENDER_CHOICES, default='m')
-    phone = models.CharField(verbose_name="تلفن همراه", null=True, blank=True, \
-        max_length=11)
+    gender = models.PositiveSmallIntegerField(verbose_name="جنسیت", choices=GENDER_CHOICES, default=1)
+    phone = models.CharField(verbose_name="تلفن همراه", null=True, max_length=11, unique=True)
     email = models.EmailField(verbose_name="ایمیل", null=True, blank=True)
     valid_phone = models.BooleanField(default=False, verbose_name="تایید تلفن همره")    
     valid_email = models.BooleanField(default=False, verbose_name="تایید ایمیل")
+    date_of_birth = models.DateField(verbose_name="تاریخ تولد", null=True, blank=True)
+    
+    USERNAME_FIELD = 'phone'
+    objects = UserManager()
 
     class Meta:
         verbose_name_plural = '   کاربران'
@@ -56,12 +59,10 @@ class User(AbstractUser):
     get_last_login.short_description = 'آخرین ورود'
 
     def get_gender(self):
-        if self.gender == 'male':
+        if self.gender == 1:
             return 'آقای'
-        elif self.gender == 'female':
+        elif self.gender == 2:
             return 'خانم'
-        elif self.gender == 'other':
-            return 'سایر'
         else:
             return 'نامعتبر'
 
@@ -77,3 +78,37 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):   
         super(User, self).save()
+
+
+
+class VerificationCode(General):
+    SUBJECT_CHOICES = [
+        ("phone", "تلفن همراه"),
+        ("email", "ایمیل"),
+    ]
+    STATUS_CHOICES =[
+        (0, "نامعتبر"),
+        (1, "معتبر"),
+        (2, "اعمال شده"),
+    ]
+    subject = models.CharField(max_length=20, choices=SUBJECT_CHOICES, verbose_name="نوع کد تایید")
+    code = models.CharField(max_length=10, blank=True, editable=False, unique=True,
+           default=generate_new_verification_code, verbose_name="کد تایید")
+    status = models.PositiveSmallIntegerField(default=1, choices=STATUS_CHOICES, verbose_name="وضعیت کد")
+    attempts =  models.PositiveSmallIntegerField(default=0, verbose_name="تعداد تلاش")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="کاربر")
+
+    class Meta:
+        verbose_name = 'کد تایید'
+        verbose_name_plural = 'کدهای تایید'
+
+    def __str__(self):
+        return f"{self.subject} - {self.code}"
+    
+    @property
+    def get_status(self):
+        return dict(self.STATUS_CHOICES)[self.status]
+
+    @property
+    def get_subject(self):
+        return dict(self.SUBJECT_CHOICES)[self.subject]

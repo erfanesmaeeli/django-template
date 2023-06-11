@@ -77,8 +77,11 @@ class User(AbstractUser):
             self.__previous_email = self.email
 
     def save(self, *args, **kwargs):   
+        if self.__previous_phone != self.phone:
+            self.valid_phone = False
+        if self.__previous_email != self.email:
+            self.valid_email = False
         super(User, self).save()
-
 
 
 class VerificationCode(General):
